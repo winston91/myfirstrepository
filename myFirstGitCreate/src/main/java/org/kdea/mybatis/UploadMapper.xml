@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kdea.dao.FileDAO"> <!--이 sql 문장과 매핑될 인터페이스의 완전한 경로 -->
+
+    <!-- 컴파일 시 실행 상황에 따라 달라지는 sql : 동적 sql by mybatis -->
+    <!-- link : http://micropilot.tistory.com/2878 -->
+    
+    <insert id="insertFileInfo">         
+        insert into files values (#{newfilename},#{author},sysdate,#{file.file.originalFilename},#{file.file.size})     
+    </insert>
+                                   <!-- 여러개 나올거 안에 들어갈 타입 -->
+    <select id="getFileList" resultType="org.kdea.vo.FileVO">
+        select * from files where author = #{author}        
+    </select>
+     
+</mapper>

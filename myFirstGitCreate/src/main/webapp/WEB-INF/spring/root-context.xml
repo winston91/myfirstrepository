@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security-4.1.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- spring security : 1.인증 2.인가 3.UI처리 -->
+	<!-- security datasource 연결 -->
+	<!--<sec:authentication-manager alias="authenticationManager"> 
+	     <sec:authentication-provider> 
+		 <sec:jdbc-user-service data-source-ref="dataSource" users-by-username-query="select 
+		   id,pwd,logined from customuser where id = ?" authorities-by-username-query="select 
+		   name,authority from customuser where id = ?" /> 
+		 </sec:authentication-provider> 
+		</sec:authentication-manager> -->
+	<!-- query관련 속성을 지정해주지 않으면 기본 타겟 테이블은 특정 구조의 users,authorities테이블 이다. -->
+
+
+
+
+    <!-- 전역공간에서 지역공간의 요소를 쓸 수 없듯이 따로 선언해 주어야 함 -->
+	<context:component-scan base-package="org.kdea.security" />
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<!-- 기존 mybatis의 내부 클래스 -->
+		<!-- vo에 맞게 매핑해줌 mapper.xml -->
+		<property name="mapperLocations" value="classpath:org/kdea/mybatis/*.xml" />
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<!-- 기존 mybatis의 클래스 -->
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+	<!-- BCryptPasswordEncoder -->
+	<bean id="passwordEncoder"
+		class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	<!-- BCryptPasswordEncoder -->
+    <!-- 전역공간에서 지역공간의 요소를 쓸수 없듯이 따로 선언해 주어야 함 -->
+
+
+
+
+	<!-- 설정 없이 코드로 UserDetailsService(db쪽 쿼리 실행)와 AuthenticationProvider(입력되는 
+		큰 부분)를 구현하면서 설정을 대신하자 -->
+	<!-- SpringSecurityAuthentication 구체화 -->
+
+	<!-- custom AuthenticationProvider -->
+	<bean id="customAuthenticationProvider" class="org.kdea.security.CustomAuthenticationProvider" />
+
+	<sec:authentication-manager>
+		<sec:authentication-provider ref="customAuthenticationProvider" />
+	</sec:authentication-manager>
+	<!-- custom AuthenticationProvider -->
+
+	<!-- custom UserDetailsService -->
+	<bean id="userService" class="org.kdea.security.UserService" />
+	<!-- custom UserDetailsService -->
+
+	<!-- SpringSecurityAuthentication 구체화 -->
+
+
+
+
+	<!-- xmlns : xmlnamespace (xmlns(:태크)없이 선언된 xmlns값은 태그:bean이 아닌 그냥 bean으로 
+		선언할수 있음(default xmlns)) -->
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<!-- security 태그 위에서 부터 차례대로 적용 -->
+	<sec:http use-expressions="true">
+
+		<!-- <sec:intercept-url pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')"/> 
+			<sec:intercept-url pattern="/manager/**" access="hasRole('ROLE_MANAGER')"/> -->
+
+		<sec:intercept-url pattern="/member/**" access="isAuthenticated()" />
+		<sec:intercept-url pattern="/admin/**"
+			access="hasAuthority('USER_MANAGER')" />
+		<sec:intercept-url pattern="/manager/**" access="hasAuthority('USER')" />
+		<sec:intercept-url pattern="/**" access="permitAll" />
+
+		<sec:intercept-url pattern="/user/loginform" access="permitAll" />
+
+		<!-- redirect할 경로 : 경로를 매핑해줘야함 컨트롤러를 통해서 아니면 설정 파일을 통해서 -->
+		<sec:form-login login-page="/login/sec_loginForm"
+			login-processing-url="/sec_login" username-parameter="id"
+			password-parameter="pwd" default-target-url="/index"
+			authentication-failure-url="/login/sec_loginForm?error=true" />
+		<!-- login처리는 그러나 sec이 알아서 다 함 -->
+		<sec:logout logout-success-url="/index" />
+		<!-- logout url은 default로 /logout으로 정해져 있다. -->
+		<!-- <sec:csrf disabled="true"/> -->
+
+	</sec:http>
+	<!-- security 태그 위에서 부터 차례대로 적용 -->
+
+</beans>
